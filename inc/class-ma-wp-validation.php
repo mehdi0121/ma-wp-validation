@@ -16,8 +16,8 @@ class MA_WP_Validation {
 	 *
 	 * @return bool
 	 */
-	public function validation($rules, $data) {
-		$this->data = $data;
+	public function validation($rules, $data,$files) {
+		$this->data = array_merge($data,$files);
 		$valid = true;
 
 		foreach ($rules as $item => $ruleSet) {
@@ -77,9 +77,14 @@ class MA_WP_Validation {
 	}
 
 
-
-
-	public function max($value, $item, $max): bool {
+	/**
+	 * @param $value
+	 * @param $item
+	 * @param $max
+	 *
+	 * @return bool
+	 */
+	private function max($value, $item, $max): bool {
 		if (strlen($value) > $max) {
 			$this->errors[] = sprintf(__('The maximum length of %s field is %s.', 'ma-wp-validation'), $item, $max);
 			return false;
@@ -99,6 +104,20 @@ class MA_WP_Validation {
 
 		return true;
 	}
+
+
+	public function exists($value, $item, $table, $column = 'id'): bool {
+		global $wpdb;
+
+		$exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}$table WHERE $column = %s", $value));
+		if (!$exists) {
+			$this->errors[] = sprintf(__('The %s value is not exists in %s.', 'ma-wp-validation'), $item, $table);
+			return false;
+		}
+
+		return true;
+	}
+
 
 	public function getErrors() {
 		return $this->errors;
